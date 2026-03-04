@@ -1,0 +1,19 @@
+.{
+    .name = .sqlitezig,
+    .version = "0.0.0",
+    .fingerprint = 0x12158a1e64387cf8,
+    .minimum_zig_version = "0.15.1",
+    .dependencies = .{
+        .sqlite = .{
+            .path = "sqlite",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "bindings",
+        "sqlite",
+        "targets",
+    },
+}
