@@ -8,10 +8,10 @@ pub fn build(b: *std.Build) !void {
     const enable_fts5 = b.option(bool, "enable_fts5", "Whether to compile sqlite with FTS5") orelse false;
     const enable_carray = b.option(bool, "enable_carray", "Whether to compile sqlite with CARRAY extension") orelse false;
 
-    const sqlite = (try sqlite_compile(b, target, optimize)).root_module;
-
-    if (enable_fts5) sqlite.addCMacro("SQLITE_ENABLE_FTS5", "1");
-    if (enable_carray) sqlite.addCMacro("SQLITE_ENABLE_CARRAY", "1");
+    const sqlite = (try sqlite_compile(b, target, optimize, .{
+        .enable_fts5 = enable_fts5,
+        .enable_carray = enable_carray,
+    })).root_module;
 
     const sqlitezig = b.addLibrary(.{
         .name = "sqlitezig",

@@ -8,10 +8,16 @@ const Target = struct {
     modules: [][]const u8,
 };
 
+const Options = struct {
+    enable_fts5: bool,
+    enable_carray: bool,
+};
+
 pub fn sqlite(
     b: *std.Build,
     target: std.Build.ResolvedTarget,
     optimize: std.builtin.OptimizeMode,
+    opts: Options,
 ) !*std.Build.Step.Compile {
     const sqlite_dep = b.dependency("sqlite", .{});
     const sqlite_path = sqlite_dep.path("");
@@ -87,6 +93,32 @@ pub fn sqlite(
     ctime_c_run.addFileArg(sqlite_path.path(b, "tool/mkctimec.tcl"));
     const ctime_c = ctime_c_run.addOutputFileArg("ctime.c");
 
+    if (opts.enable_fts5) {
+        const awf_fts5 = b.addWriteFiles();
+        const fts5_parse_dir = awf_fts5.addCopyDirectory(sqlite_path.path(b, "ext/fts5"), "parse/fts5", .{ .exclude_extensions = &.{".test"} });
+        _ = awf_fts5.addCopyFile(sqlite_path.path(b, "manifest"), "manifest");
+        _ = awf_fts5.addCopyFile(sqlite_path.path(b, "manifest.uuid"), "manifest.uuid");
+
+        const parse_fts5_run = b.addRunArtifact(lemon);
+        parse_fts5_run.setCwd(fts5_parse_dir);
+        parse_fts5_run.addPrefixedFileArg("-T", sqlite_path.path(b, "tool/lempar.c"));
+        parse_fts5_run.addPrefixedDirectoryArg("-d", fts5_parse_dir);
+        parse_fts5_run.addArg("-S");
+        parse_fts5_run.addFileArg(fts5_parse_dir.path(b, "fts5parse.y"));
+
+        const fts5_c_run = b.addRunArtifact(jimsh);
+        fts5_c_run.setCwd(fts5_parse_dir);
+        fts5_c_run.addFileArg(fts5_parse_dir.path(b, "tool/mkfts5c.tcl"));
+
+        fts5_c_run.step.dependOn(&parse_fts5_run.step);
+        libsqlite.step.dependOn(&fts5_c_run.step);
+
+        libsqlite.root_module.addIncludePath(fts5_parse_dir);
+        libsqlite.root_module.addCSourceFile(.{ .file = fts5_parse_dir.path(b, "fts5.c") });
+        libsqlite.root_module.addCMacro("SQLITE_ENABLE_FTS5", "1");
+        libsqlite.root_module.addCMacro("SQLITE_DEBUG", "1");
+    }
+
     const awf_h = b.addWriteFiles();
     const opcodes_h_file = awf_h.addCopyFile(opcodes_h, "opcodes.h");
     const sqlite_h_file = awf_h.addCopyFile(sqlite_h, "sqlite3.h");
@@ -106,6 +138,8 @@ pub fn sqlite(
     libsqlite.root_module.addCSourceFile(.{ .file = ctime_c });
     libsqlite.root_module.addCSourceFile(.{ .file = opcodes_c_file });
     libsqlite.root_module.addCSourceFile(.{ .file = parse_dir.path(b, "parse.c") });
+
+    if (opts.enable_carray) libsqlite.root_module.addCMacro("SQLITE_ENABLE_CARRAY", "1");
 
     const sqlitebindings = b.addTranslateC(.{
         .optimize = optimize,

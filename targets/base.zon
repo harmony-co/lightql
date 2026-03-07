@@ -2,6 +2,7 @@
     .include = .{
         ".",
         "src",
+        "ext",
     },
     .files = .{
         "src/json.c",
@@ -84,6 +85,7 @@
         "src/expr.c",
         "src/pcache.c",
         "src/window.c",
+        "ext/fts5/fts5_main.c",
     },
     .flags = .{},
     .modules = .{},
