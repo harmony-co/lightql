@@ -13,9 +13,9 @@ pub fn build(b: *std.Build) !void {
         .enable_carray = enable_carray,
     })).root_module;
 
-    const sqlitezig = b.addLibrary(.{
-        .name = "sqlitezig",
-        .root_module = b.addModule("sqlitezig", .{
+    const lightql = b.addLibrary(.{
+        .name = "lightql",
+        .root_module = b.addModule("lightql", .{
             .root_source_file = b.path("src/root.zig"),
             .target = target,
             .optimize = optimize,
@@ -25,14 +25,14 @@ pub fn build(b: *std.Build) !void {
         }),
     });
 
-    b.installArtifact(sqlitezig);
+    b.installArtifact(lightql);
 
     const exe_mod = b.createModule(.{
         .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
         .imports = &.{
-            .{ .name = "sqlitezig", .module = sqlitezig.root_module },
+            .{ .name = "lightql", .module = lightql.root_module },
         },
     });
     const exe = b.addExecutable(.{

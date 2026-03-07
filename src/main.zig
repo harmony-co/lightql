@@ -1,8 +1,8 @@
-const sqlitezig = @import("sqlitezig");
+const lightql = @import("lightql");
 const std = @import("std");
 
 pub fn main() !void {
-    const db: sqlitezig.Database = try .init("test.db", .{});
+    const db: lightql.Database = try .init("test.db", .{});
     defer db.deinit();
 
     _ = try db.exec("CREATE TABLE IF NOT EXISTS TestTable (name)");

@@ -1,8 +1,7 @@
 .{
-    .name = .sqlitezig,
-    .version = "0.0.0",
-    .fingerprint = 0x12158a1e64387cf8,
-    .minimum_zig_version = "0.15.1",
+    .name = .lightql,
+    .version = "0.0.1",
+    .minimum_zig_version = "0.15.2",
     .dependencies = .{
         .sqlite = .{
             .path = "sqlite",
@@ -12,8 +11,7 @@
         "build.zig",
         "build.zig.zon",
         "src",
-        "bindings",
-        "sqlite",
         "targets",
     },
+    .fingerprint = 0xad97684a52fd45a,
 }

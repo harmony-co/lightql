@@ -13,18 +13,18 @@ pub fn main() !void {
     // `std.fs.cwd()` is always relative to where the process is being called from
     //
     // ```sh
-    // # from `/path/to/sqlitezig/../` (parent dir of where the project is)
-    // echo "something" | zig run sqlitezig/scripts/build.pipe_concat.zig -- ./build.zig.zon
-    // error(opcodes): /path/to/sqlitezig/../build.zig.zon File not found.
+    // # from `/path/to/lightql/../` (parent dir of where the project is)
+    // echo "something" | zig run lightql/scripts/build.pipe_concat.zig -- ./build.zig.zon
+    // error(opcodes): /path/to/lightql/../build.zig.zon File not found.
     // ```
     //
     // ```sh
-    // # from `/path/to/sqlitezig/` (inside the project dir)
+    // # from `/path/to/lightql/` (inside the project dir)
     // echo "something" | zig run scripts/build.pipe_concat.zig -- ./build.zig.zon
     // something
     //
     // .{
-    //     .name = .sqlitezig,
+    //     .name = .lightql,
     // ...
     // ```
     const cwd = std.fs.cwd();

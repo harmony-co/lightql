@@ -1,20 +1,20 @@
-## sqlitezig
+## lightql
 
 Build SQLite with a minimal setup, using zig
 
 ## Installation
 
 ```sh
-git submodule add git@github.com:brianferri/sqlitezig.git
-git submodule update --init --recursive --remote
+git submodule add git@github.com:harmony-co/lightql.git
+git submodule update --init --recursive
 ```
 
 In your `build.zig.zon`:
 
 ```zig
 .dependencies = .{
-    .sqlitezig = .{
-        .path = "sqlitezig",
+    .lightql = .{
+        .path = "lightql",
     },
 },
 ```
@@ -22,7 +22,7 @@ In your `build.zig.zon`:
 And import it on your `build.zig` file:
 
 ```zig
-const sqlitezig = b.dependency("sqlitezig", .{ .target = target, .optimize = optimize });
+const lightql = b.dependency("lightql", .{ .target = target, .optimize = optimize });
 
 const exe = b.addExecutable(.{
     .name = "your_project",
@@ -31,7 +31,7 @@ const exe = b.addExecutable(.{
         .target = target,
         .optimize = optimize,
         .imports = &.{
-            .{ .name = "sqlitezig", .module = sqlitezig.module("sqlitezig") },
+            .{ .name = "lightql", .module = lightql.module("lightql") },
         },
     }),
 });
