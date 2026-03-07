@@ -116,7 +116,6 @@ pub fn sqlite(
         libsqlite.root_module.addIncludePath(fts5_parse_dir);
         libsqlite.root_module.addCSourceFile(.{ .file = fts5_parse_dir.path(b, "fts5.c") });
         libsqlite.root_module.addCMacro("SQLITE_ENABLE_FTS5", "1");
-        libsqlite.root_module.addCMacro("SQLITE_DEBUG", "1");
     }
 
     const awf_h = b.addWriteFiles();
@@ -140,6 +139,12 @@ pub fn sqlite(
     libsqlite.root_module.addCSourceFile(.{ .file = parse_dir.path(b, "parse.c") });
 
     libsqlite.root_module.addCMacro("SQLITE_CORE", "1");
+
+    // TODO: Allow users to set the debug mode themselves
+    if (optimize == .Debug) {
+        libsqlite.root_module.addCMacro("SQLITE_DEBUG", "1");
+    }
+
     if (opts.enable_carray) libsqlite.root_module.addCMacro("SQLITE_ENABLE_CARRAY", "1");
 
     const sqlitebindings = b.addTranslateC(.{
