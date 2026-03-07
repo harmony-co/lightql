@@ -149,6 +149,8 @@ pub fn sqlite(
     });
     sqlitebindings.addIncludePath(awf_h.getDirectory());
 
+    _ = b.addModule("sqlite3.h", .{ .root_source_file = sqlite_h_file });
+
     const lib = b.addLibrary(.{
         .name = "sqlite",
         .linkage = .static,
