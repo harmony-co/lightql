@@ -139,6 +139,7 @@ pub fn sqlite(
     libsqlite.root_module.addCSourceFile(.{ .file = opcodes_c_file });
     libsqlite.root_module.addCSourceFile(.{ .file = parse_dir.path(b, "parse.c") });
 
+    libsqlite.root_module.addCMacro("SQLITE_CORE", "1");
     if (opts.enable_carray) libsqlite.root_module.addCMacro("SQLITE_ENABLE_CARRAY", "1");
 
     const sqlitebindings = b.addTranslateC(.{
