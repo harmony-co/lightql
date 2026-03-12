@@ -5,18 +5,7 @@ Build SQLite with a minimal setup, using zig
 ## Installation
 
 ```sh
-git submodule add git@github.com:harmony-co/lightql.git
-git submodule update --init --recursive
-```
-
-In your `build.zig.zon`:
-
-```zig
-.dependencies = .{
-    .lightql = .{
-        .path = "lightql",
-    },
-},
+zig fetch --save git+https://github.com/harmony-co/lightql
 ```
 
 And import it on your `build.zig` file:
