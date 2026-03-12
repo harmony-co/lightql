@@ -4,14 +4,17 @@
     .minimum_zig_version = "0.15.2",
     .dependencies = .{
         .sqlite = .{
-            .path = "sqlite",
+            .url = "git+https://github.com/sqlite/sqlite#6c446015bdcc448a8e205cb74c6d0701f5ca4b09",
+            .hash = "N-V-__8AABNhpgaT7dRG1uTFWILjWF2_nOA6RJH6pXg9uXlc",
         },
     },
     .paths = .{
+        "build.sqlite.zig",
         "build.zig",
         "build.zig.zon",
         "src",
         "targets",
+        "scripts",
     },
     .fingerprint = 0xad97684a52fd45a,
 }
