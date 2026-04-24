@@ -237,12 +237,10 @@ fn getConfig(comptime T: type, b: *std.Build, dir: []const u8, name: []const u8)
     const alloc = b.allocator;
     const io = b.graph.io;
 
-    const cwd = std.Io.Dir.cwd();
-
-    const config_path = try cwd.realPathFileAlloc(io, b.fmt("{s}/{s}.zon", .{ dir, name }), alloc);
+    const config_path = try std.Io.Dir.realPathFileAbsoluteAlloc(io, b.fmt("{s}/{s}/{s}.zon", .{ b.build_root.path.?, dir, name }), alloc);
     defer alloc.free(config_path);
 
-    const config_file = try cwd.openFile(io, config_path, .{});
+    const config_file = try std.Io.Dir.openFileAbsolute(io, config_path, .{});
     defer config_file.close(io);
 
     const file = try config_file.stat(io);
