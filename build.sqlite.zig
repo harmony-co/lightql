@@ -55,12 +55,12 @@ pub fn sqlite(
     const parse_vdbe_concat_run = b.addRunArtifact(pipe_concat);
     parse_vdbe_concat_run.setStdIn(.{ .lazy_path = parse_dir.path(b, "parse.h") });
     parse_vdbe_concat_run.addFileArg(sqlite_path.path(b, "src/vdbe.c"));
-    const parse_vdbe = parse_vdbe_concat_run.captureStdOut();
+    const parse_vdbe = parse_vdbe_concat_run.captureStdOut(.{});
 
     const opcodes_h_run = b.addRunArtifact(jimsh);
     opcodes_h_run.setStdIn(.{ .lazy_path = parse_vdbe });
     opcodes_h_run.addFileArg(sqlite_path.path(b, "tool/mkopcodeh.tcl"));
-    const opcodes_h = opcodes_h_run.captureStdOut();
+    const opcodes_h = opcodes_h_run.captureStdOut(.{});
 
     const mksqlite3h_scope = b.addWriteFiles();
     _ = mksqlite3h_scope.addCopyDirectory(mksourceid.getEmittedBinDirectory(), "", .{});
@@ -80,10 +80,10 @@ pub fn sqlite(
     sqlite_h_run.setCwd(mksqlite3h);
     sqlite_h_run.addFileArg(mksqlite3h.path(b, "tool/mksqlite3h.tcl"));
     sqlite_h_run.addDirectoryArg(mksqlite3h);
-    const sqlite_h = sqlite_h_run.captureStdOut();
+    const sqlite_h = sqlite_h_run.captureStdOut(.{});
 
     const keywordhash_run = b.addRunArtifact(mkkeywordhash);
-    const keywordhash_h = keywordhash_run.captureStdOut();
+    const keywordhash_h = keywordhash_run.captureStdOut(.{});
 
     const pragma_h_run = b.addRunArtifact(jimsh);
     pragma_h_run.addFileArg(sqlite_path.path(b, "tool/mkpragmatab.tcl"));
@@ -127,7 +127,7 @@ pub fn sqlite(
     const opcodes_c_run = b.addRunArtifact(jimsh);
     opcodes_c_run.addFileArg(sqlite_path.path(b, "tool/mkopcodec.tcl"));
     opcodes_c_run.addFileArg(opcodes_h_file);
-    const opcodes_c = opcodes_c_run.captureStdOut();
+    const opcodes_c = opcodes_c_run.captureStdOut(.{});
 
     const awf_c = b.addWriteFiles();
     const opcodes_c_file = awf_c.addCopyFile(opcodes_c, "opcodes.c");
@@ -235,19 +235,22 @@ fn genJimsh(
 
 fn getConfig(comptime T: type, b: *std.Build, dir: []const u8, name: []const u8) !T {
     const alloc = b.allocator;
+    const io = b.graph.io;
 
-    const config_path = try b.build_root.handle.realpathAlloc(alloc, b.fmt("{s}/{s}.zon", .{ dir, name }));
+    const cwd = std.Io.Dir.cwd();
+
+    const config_path = try cwd.realPathFileAlloc(io, b.fmt("{s}/{s}.zon", .{ dir, name }), alloc);
     defer alloc.free(config_path);
 
-    const config_file = try std.fs.openFileAbsolute(config_path, .{});
-    defer config_file.close();
+    const config_file = try cwd.openFile(io, config_path, .{});
+    defer config_file.close(io);
 
-    const file = try config_file.stat();
+    const file = try config_file.stat(io);
     var buffer = try alloc.allocSentinel(u8, file.size, 0);
     errdefer alloc.destroy(&buffer);
 
-    var reader = config_file.reader(buffer);
+    var reader = config_file.reader(io, buffer);
     try reader.interface.readSliceAll(buffer);
 
-    return try std.zon.parse.fromSlice(T, alloc, buffer, null, .{});
+    return try std.zon.parse.fromSliceAlloc(T, alloc, buffer, null, .{});
 }

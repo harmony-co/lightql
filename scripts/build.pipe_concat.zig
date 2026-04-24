@@ -9,7 +9,7 @@ const std = @import("std");
 
 const logger = std.log.scoped(.pipe_concat);
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     // `std.fs.cwd()` is always relative to where the process is being called from
     //
     // ```sh
@@ -27,41 +27,38 @@ pub fn main() !void {
     //     .name = .lightql,
     // ...
     // ```
-    const cwd = std.fs.cwd();
+    const io = init.io;
+    const arena = init.arena.allocator();
 
-    var arena_state: std.heap.ArenaAllocator = .init(std.heap.page_allocator);
-    defer arena_state.deinit();
-    const arena = arena_state.allocator();
-
+    const cwd = std.Io.Dir.cwd();
     // TODO: maybe this is the correct dir to use across all open/realpath calls?
-    const self_exe_dir_path = try std.fs.selfExeDirPathAlloc(arena);
-    var self_exe_dir = try cwd.openDir(self_exe_dir_path, .{});
-    defer self_exe_dir.close();
+    const self_exe_dir_path = try std.process.executableDirPathAlloc(io, arena);
+    var self_exe_dir = try cwd.openDir(io, self_exe_dir_path, .{});
+    defer self_exe_dir.close(io);
 
-    const args = try std.process.argsAlloc(arena);
-    defer std.process.argsFree(arena, args);
+    const args = try init.minimal.args.toSlice(arena);
     if (args.len != 2) {
         logger.err("Must pass exactly one file path.", .{});
         std.process.exit(1);
     }
 
-    const file_path = cwd.realpathAlloc(arena, args[1]) catch |err| switch (err) {
+    const file_path = cwd.realPathFileAlloc(io, args[1], arena) catch |err| switch (err) {
         error.FileNotFound => {
             logger.err("{s} File not found.", .{try std.fs.path.resolve(arena, &.{
-                try cwd.realpathAlloc(arena, "."), args[1],
+                try cwd.realPathFileAlloc(io, ".", arena), args[1],
             })});
             std.process.exit(1);
         },
         else => return err,
     };
-    const file = try self_exe_dir.openFile(file_path, .{});
-    defer file.close();
+    const file = try self_exe_dir.openFile(io, file_path, .{});
+    defer file.close(io);
 
     var allocating: std.Io.Writer.Allocating = .init(arena);
     defer allocating.deinit();
     const allocating_writer = allocating.writer;
 
-    var stdin_reader = std.fs.File.stdin().reader(allocating_writer.buffer);
+    var stdin_reader = std.Io.File.stdin().reader(io, allocating_writer.buffer);
     const stdin = &stdin_reader.interface;
     const input = try stdin.allocRemaining(arena, .unlimited);
     if (input.len == 0 or std.mem.eql(u8, "", std.mem.trim(u8, input, &std.ascii.whitespace))) {
@@ -69,11 +66,9 @@ pub fn main() !void {
         std.process.exit(1);
     }
 
-    const file_size = (try file.stat()).size;
-    const file_buffer = try self_exe_dir.readFileAlloc(arena, file_path, file_size);
-
-    const stdout_buffer = try arena.alloc(u8, input.len + file_size);
-    var stdout_writer = std.fs.File.stdout().writer(stdout_buffer);
+    const file_buffer = try self_exe_dir.readFileAlloc(io, file_path, arena, .unlimited);
+    const stdout_buffer = try arena.alloc(u8, input.len + file_buffer.len);
+    var stdout_writer = std.Io.File.stdout().writer(io, stdout_buffer);
     const stdout = &stdout_writer.interface;
 
     try stdout.print("{s}\n{s}\n", .{ input, file_buffer });
